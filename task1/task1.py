@@ -27,7 +27,7 @@ def solve_SLAE(A,b):
 
 
 def build_graph(n_of_dimensions):
-    result = np.zeros(n_of_dimensions)
+result = np.zeros(n_of_dimensions)
     for d in range(1,n_of_dimensions):
         tmp = np.zeros(5)
         for x in range(5):

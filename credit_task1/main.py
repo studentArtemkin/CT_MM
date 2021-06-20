@@ -52,7 +52,7 @@ class M_model:
 
 
     def InitializeElements(self):
-        file = open('model\\model3.obj')
+        file = open('model\\model3.obj')#TBA
         lines = file.readlines()
         state = 0
         self.vertecies = []
@@ -168,12 +168,15 @@ class Window(QWidget):
 
         self.results_file_name = 'results.csv'
         self.NofNodes = 100
+        
 
         self.glWidget = GLWidget()
+        self.glWidget.solution = []
 
         self.xSlider = self.createSlider()
         self.ySlider = self.createSlider()
         self.zSlider = self.createZoomSlider()
+        self.tSlider = self.createTimeSlider()
 
         self.xSlider.valueChanged.connect(self.glWidget.setXRotation)
         self.glWidget.xRotationChanged.connect(self.xSlider.setValue)
@@ -181,6 +184,8 @@ class Window(QWidget):
         self.glWidget.yRotationChanged.connect(self.ySlider.setValue)
         self.zSlider.valueChanged.connect(self.glWidget.setZRotation)
         self.glWidget.zRotationChanged.connect(self.zSlider.setValue)
+        self.tSlider.valueChanged.connect(self.glWidget.setTimeChange)
+        #self.glWidget.tRotationChanged.connect(self.tSlider.setValue)
         mainLayout = QHBoxLayout()
 
         glLayout = QVBoxLayout()
@@ -188,6 +193,8 @@ class Window(QWidget):
         glLayout.addWidget(self.xSlider)
         glLayout.addWidget(self.ySlider)
         glLayout.addWidget(self.zSlider)
+        glLayout.addWidget(self.tSlider)
+        
         
 
         self.save_coefficients_btn = QPushButton('save coefficients',self)
@@ -343,7 +350,8 @@ class Window(QWidget):
         self.Start_btn.setEnabled(False)
         self.results_file_btn.setEnabled(False)
         self.label.setText('Solving')
-        duration = int(self.time_textbox.text())
+        #duration = int(self.time_textbox.text())
+        duration = float(self.time_textbox.text())
         self.glWidget.model.findTemp()
         
         temp0=[]
@@ -356,6 +364,8 @@ class Window(QWidget):
                 elem.temperature = sol[i,elem.e_id]
             self.glWidget.update()
             time.sleep(0.1)
+
+        self.glWidget.solution = sol.copy()
         
         if self.results_file_name:
             with open(self.results_file_name, 'w', newline='') as current_file:
@@ -369,6 +379,7 @@ class Window(QWidget):
         self.label.setText('Solved')
         self.Start_btn.setEnabled(True)
         self.results_file_btn.setEnabled(True)
+        self.tSlider.setRange(0,sol.shape[0]-1)
 
 
     
@@ -398,10 +409,23 @@ class Window(QWidget):
 
         return slider
 
+    def createTimeSlider(self):
+        slider = QSlider(Qt.Horizontal)
+
+        slider.setRange(1,1)
+        slider.setSingleStep(1)
+        slider.setPageStep(1)
+        slider.setTickInterval(1)
+        slider.setTickPosition(QSlider.TicksRight)
+
+        return slider
+
+
 class GLWidget(QOpenGLWidget):
     xRotationChanged = pyqtSignal(int)
     yRotationChanged = pyqtSignal(int)
     zRotationChanged = pyqtSignal(int)
+    tRotationChanged = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super(GLWidget, self).__init__(parent)
@@ -453,12 +477,16 @@ class GLWidget(QOpenGLWidget):
             self.update()
 
     def setZRotation(self, angle):
-        0
         z = self.normalizeAngle(angle)
         if z != self.zoom:
             self.zoom = z
             self.zRotationChanged.emit(z)
             self.update()
+
+    def setTimeChange(self, time):
+        for elem in self.model.f_elements:
+            elem.temperature = self.solution[time,elem.e_id]
+        self.update()
 
     def initializeGL(self):
         print(self.getOpenglInfo())
