@@ -422,9 +422,9 @@ if __name__ == '__main__':
     time4 = time.time() - tmp_time
 
     print('test: ' + str(solution_test) + '\n')
-    #print('Verlet: ' + str(solution_Verlet) + '\n')
-    #print('Verlet_threading: ' + str(solution_Verlet_threading) + '\n')
-    #print('Verlet_multiprocessing: ' + str(solution_Verlet_multiproessing) + '\n')
+    print('Verlet: ' + str(solution_Verlet) + '\n')
+    print('Verlet_threading: ' + str(solution_Verlet_threading) + '\n')
+    print('Verlet_multiprocessing: ' + str(solution_Verlet_multiproessing) + '\n')
     print('Verlet_cython: ' + str(solution_Verlet_cython) + '\n')
 
     print(str(time0) + ' ' + str(time1) + ' ' + str(time2) + ' ' + str(time3)+ ' ' + str(time4))
