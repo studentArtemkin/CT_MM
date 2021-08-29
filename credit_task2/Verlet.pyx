@@ -3,9 +3,9 @@ from collections import namedtuple
 from numpy.core.function_base import linspace
 
 Body = namedtuple("Body", "mass position velocity")
-G = 6.67408 * numpy.power(10.0,-11)
+#G = 6.67408 * numpy.power(10.0,-11)
 
-def solve4(data, N, dim):
+def solve4(data, N, dim,G,t):
     y0 = []
     for elem0 in data:
         for elem1 in elem0.position:
@@ -17,8 +17,7 @@ def solve4(data, N, dim):
     for elem in data:
         masses.append(elem.mass[0])
 
-    sol = numpy.zeros((101,N*dim*2))
-    t = linspace(0,10,101)
+    sol = numpy.zeros((t.shape[0],N*dim*2))
     dt = t[1]
     a_old = numpy.zeros(N*dim)
     a = numpy.zeros(N*dim)
