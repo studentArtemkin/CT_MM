@@ -22,6 +22,7 @@ from astropy.time import Time
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import sunpy
+import sys
 
 #import pyopencl as cl
 
@@ -167,7 +168,7 @@ def solve1(data, N, dim,G,t):#Verlet method
                     a[i*dim + k] = tmp
             #v
             for i in range(N*dim):
-                sol[n,N*dim+i] = sol[n-1,N*dim+i] + (a[i]+a_old[i])*dt/2 
+                sol[n,N*dim+i] = sol[n-1,N*dim+i] + (a[i]+a_old[i])*dt/2
     return sol
 
 #======================================================================
@@ -177,6 +178,8 @@ def solve1(data, N, dim,G,t):#Verlet method
 
 def threading_task(sol,y0,masses,a,a_old, dist_3,N,dim,t,dt, dedicated_id0, dedicated_id1, barrier_list,G):
     count_barrier = 0
+    #print(str(y0)+'\n'+str(dedicated_id0)+'\n'+str(dedicated_id1))
+    #input()
     #find distances
     for i in range(dedicated_id0,dedicated_id1):
         for j in range(N):
@@ -202,7 +205,7 @@ def threading_task(sol,y0,masses,a,a_old, dist_3,N,dim,t,dt, dedicated_id0, dedi
     count_barrier += 1
     for n,current_t in enumerate(t):
         if n == 0:
-            for i in range(2*dedicated_id0,2*dedicated_id1):
+            for i in range(2*dim*dedicated_id0,2*dim*dedicated_id1):
                 sol[0][i] = y0[i]
             barrier_list[count_barrier].wait()
             count_barrier += 1
@@ -278,7 +281,7 @@ def solve2(data, N, dim, NofThreads,G,t):
     evaluation_ids = numpy.zeros((NofThreads,2))
     for i in range(NofThreads):
         evaluation_ids[i,0] = i*int(N/NofThreads)
-        if i == NofThreads:
+        if i == NofThreads-1:
             evaluation_ids[i,1] = int(N-1)
         else:
             evaluation_ids[i,1] = int((i+1)*int(N/NofThreads)-1)
@@ -330,7 +333,7 @@ def multiprocessing_task(sol_m,y0,masses,a_m,a_old_m, dist_3_m,N,dim,t,dt, dedic
     count_barrier += 1
     for n,current_t in enumerate(t):
         if n == 0:
-            for i in range(2*dedicated_id0,2*dedicated_id1):
+            for i in range(2*dim*dedicated_id0,2*dim*dedicated_id1):
                 sol[0][i] = y0[i]
             barrier_list[count_barrier].wait()
             count_barrier += 1
@@ -526,49 +529,6 @@ def solve5(data, N, dim,G,t):
 
 
 
-def test0():
-    N = 10
-    dim = 1
-    NofThreads = 5
-    G = 6.67408 * numpy.power(10.0,-11)
-    data = formData(N, dim)
-    t = linspace(0,10,101)
-    time0 = 0
-    time1 = 0
-    time2 = 0
-    time3 = 0 
-    time4 = 0
-    time5 = 0
-    tmp_time = time.time()
-    solution_test = test(data, N, dim,G,t)
-    time0 = time.time() - tmp_time
-    tmp_time = time.time()
-    solution_Verlet = solve1(data, N, dim,G,t)
-    time1 = time.time() - tmp_time
-    tmp_time = time.time()
-    solution_Verlet_threading = solve2(data, N, dim, NofThreads,G,t)
-    time2 = time.time() - tmp_time
-    tmp_time = time.time()
-    solution_Verlet_multiproessing = solve3(data, N, dim, NofThreads,G,t)
-    time3 = time.time() - tmp_time
-    tmp_time = time.time()
-    solution_Verlet_cython = Verlet.solve4(data, N, dim,G,t)
-    time4 = time.time() - tmp_time
-    tmp_time = time.time()
-    solution_Verlet_CUDA = solve5(data, N, dim,G,t)
-    time5 = time.time() - tmp_time
-
-    print('test: ' + str(solution_test) + '\n')
-    print('Verlet: ' + str(solution_Verlet) + '\n')
-    print('Verlet_threading: ' + str(solution_Verlet_threading) + '\n')
-    print('Verlet_multiprocessing: ' + str(solution_Verlet_multiproessing) + '\n')
-    print('Verlet_cython: ' + str(solution_Verlet_cython) + '\n')
-    print('Verlet_CUDA: ' + str(solution_Verlet_CUDA) + '\n')
-
-    print(str(time0) + ' ' + str(time1) + ' ' + str(time2) + ' ' + str(time3)+ ' ' + str(time4) + ' ' + str(time5))
-
-
-
 
 def test_planets():
     kg2Em = 1.67443e-25#earth mass
@@ -590,24 +550,26 @@ def test_planets():
     t = numpy.linspace(0, endtime, endtime+1)
     sol0 = test(myData,len(myData),2,G,t)
     sol = solve1(myData,len(myData),2,G,t)
-    sol2 = solve2(myData,len(myData),2,5,G,t)
-    sol3 = solve3(myData,len(myData),2,5,G,t)
+    sol2 = solve2(myData,len(myData),2,4,G,t)
+    sol3 = solve3(myData,len(myData),2,4,G,t)
     sol4 = Verlet.solve4(myData,len(myData),2,G,t)
     sol5 = solve5(myData,len(myData),2,G,t)
 
-    error1 = sol - sol0
-    error2 = sol2 - sol0
-    error3 = sol3 - sol0
-    error4 = sol4 - sol0
-    error5 = sol5 - sol0
+
+    error1 = abs(sol - sol0)
+    error2 = abs(sol2 - sol0)
+    error3 = abs(sol3 - sol0)
+    error4 = abs(sol4 - sol0)
+    error5 = abs(sol5 - sol0)
 
     
     table = plt.figure(1)
-    #plt.plot(t,error1.mean(1))
-    #plt.plot(t,error2.mean(1))
-    #plt.plot(t,error3.mean(1))
-    #plt.plot(t,error4.mean(1))
-    plt.plot(t,error5.mean(1))
+    plt.plot(t,error1.mean(1),label="default")
+    plt.plot(t,error2.mean(1),label="threading")
+    plt.plot(t,error3.mean(1),label="multiprocessing")
+    plt.plot(t,error4.mean(1),label="cython")
+    plt.plot(t,error5.mean(1),label="CUDA")
+    plt.legend()
 
     fig = plt.figure(2)
     ax1 = plt.subplot(1, 1, 1, projection='polar')
@@ -639,11 +601,83 @@ def test_planets():
     plt.show()
 
 
+def measure_time():
+    #N
+    dim = 1
+    NofThreads = 5
+    G = 6.67408 * numpy.power(10.0,-11)
+    t = linspace(0,10,101)
+    time1 = [0,0,0]
+    time2 = [0,0,0]
+    time3 = [0,0,0]
+    time4 = [0,0,0]
+    time5 = [0,0,0]
+    myRange = [100, 200, 400]
+    for i,N in enumerate(myRange):
+        data = formData(N, dim)
+        for j in range(3):     
+            tmp_time = time.time()
+            solve1(data, N, dim,G,t)
+            time1[i] += time.time() - tmp_time
+        for j in range(3):
+            tmp_time = time.time()
+            solve2(data, N, dim, NofThreads,G,t)
+            time2[i] += time.time() - tmp_time
+        for j in range(3):
+            tmp_time = time.time()
+            solve3(data, N, dim, NofThreads,G,t)
+            time3[i] += time.time() - tmp_time
+        for j in range(3):
+            tmp_time = time.time()
+            Verlet.solve4(data, N, dim,G,t)
+            time4[i] += time.time() - tmp_time
+        for j in range(3):
+            tmp_time = time.time()
+            solve5(data, N, dim,G,t)
+            time5[i] += time.time() - tmp_time
+    for i in range(3):
+        time1[i] /= 3
+        time2[i] /= 3
+        time3[i] /= 3
+        time4[i] /= 3
+        time5[i] /= 3
+    plt.subplot(1, 3, 1)
+    plt.plot(myRange,time1,label="default")
+    plt.plot(myRange,time2,label="threading")
+    plt.plot(myRange,time3,label="multiprocessing")
+    plt.plot(myRange,time4,label="cython")
+    plt.plot(myRange,time5,label="CUDA")
+    plt.legend()
+    plt.subplot(1, 3, 2)
+    for i in range(3):
+        time2[i] = time1[i] / time2[i]
+        time3[i] = time1[i] / time3[i]
+        time4[i] = time1[i] / time4[i]
+        time5[i] = time1[i] / time5[i]
+    plt.plot(myRange,time2,label="threading")
+    plt.plot(myRange,time3,label="multiprocessing")
+    plt.plot(myRange,time4,label="cython")
+    plt.plot(myRange,time5,label="CUDA")
+    plt.legend()
+    plt.subplot(1,3,3)
+    plt.plot(myRange,time2,label="threading")
+    plt.plot(myRange,time3,label="multiprocessing")
+    plt.plot(myRange,time4,label="cython")
+    plt.legend()
+    plt.show()
+
+
+
+
 
 
 #test
 if __name__ == '__main__':
-    test_planets()
-    #test0()
+    print(sys.argv[1])
+    if sys.argv[1] == "planets":
+        test_planets()
+    elif sys.argv[1] == "measure_time":
+        measure_time()
+
 
     
