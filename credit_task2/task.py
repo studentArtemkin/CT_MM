@@ -10,8 +10,10 @@ from scipy.integrate import odeint
 from multiprocessing import Barrier, Process
 from multiprocessing import Pool
 from ctypes import *
-import pyximport; pyximport.install()
-import Verlet
+#import pyximport; pyximport.install()
+#import Verlet
+#import cython.cimports
+import Verlet1
 from numba import cuda, float32
 import numba
 import math
@@ -423,6 +425,29 @@ def solve3(data, N, dim, NofThreads,G,t):
         process.join()
     return sol
 
+
+#======================================================================
+#Verlet 
+#======================================================================
+
+def solve4(data, N, dim,G,t):
+    y0 = []
+    for elem0 in data:
+        for elem1 in elem0.position:
+            y0.append(elem1)
+    for elem0 in data:
+        for elem1 in elem0.velocity:
+            y0.append(elem1)
+    masses =[]
+    for elem in data:
+        masses.append(elem.mass[0])
+
+    sol = numpy.zeros((t.shape[0],N*dim*2))
+    dt = t[1]
+    a_old = numpy.zeros(N*dim)
+    a = numpy.zeros(N*dim)
+
+
 #======================================================================
 #CUDA 
 #======================================================================
@@ -529,6 +554,49 @@ def solve5(data, N, dim,G,t):
 
 
 
+def test0():
+    N = 10
+    dim = 1
+    NofThreads = 5
+    G = 6.67408 * numpy.power(10.0,-11)
+    data = formData(N, dim)
+    t = linspace(0,10,101)
+    time0 = 0
+    time1 = 0
+    time2 = 0
+    time3 = 0 
+    time4 = 0
+    time5 = 0
+    tmp_time = time.time()
+    solution_test = test(data, N, dim,G,t)
+    time0 = time.time() - tmp_time
+    tmp_time = time.time()
+    solution_Verlet = solve1(data, N, dim,G,t)
+    time1 = time.time() - tmp_time
+    tmp_time = time.time()
+    solution_Verlet_threading = solve2(data, N, dim, NofThreads,G,t)
+    time2 = time.time() - tmp_time
+    tmp_time = time.time()
+    solution_Verlet_multiproessing = solve3(data, N, dim, NofThreads,G,t)
+    time3 = time.time() - tmp_time
+    tmp_time = time.time()
+    solution_Verlet_cython = Verlet1.solve4(data, N, dim,G,t)
+    time4 = time.time() - tmp_time
+    tmp_time = time.time()
+    solution_Verlet_CUDA = solve5(data, N, dim,G,t)
+    time5 = time.time() - tmp_time
+
+    print('test: ' + str(solution_test) + '\n')
+    print('Verlet: ' + str(solution_Verlet) + '\n')
+    print('Verlet_threading: ' + str(solution_Verlet_threading) + '\n')
+    print('Verlet_multiprocessing: ' + str(solution_Verlet_multiproessing) + '\n')
+    print('Verlet_cython: ' + str(solution_Verlet_cython) + '\n')
+    print('Verlet_CUDA: ' + str(solution_Verlet_CUDA) + '\n')
+
+    print(str(time0) + ' ' + str(time1) + ' ' + str(time2) + ' ' + str(time3)+ ' ' + str(time4) + ' ' + str(time5))
+
+
+
 
 def test_planets():
     kg2Em = 1.67443e-25#earth mass
@@ -552,7 +620,7 @@ def test_planets():
     sol = solve1(myData,len(myData),2,G,t)
     sol2 = solve2(myData,len(myData),2,4,G,t)
     sol3 = solve3(myData,len(myData),2,4,G,t)
-    sol4 = Verlet.solve4(myData,len(myData),2,G,t)
+    sol4 = Verlet1.solve4(myData,len(myData),2,G,t)
     sol5 = solve5(myData,len(myData),2,G,t)
 
 
@@ -629,7 +697,7 @@ def measure_time():
             time3[i] += time.time() - tmp_time
         for j in range(3):
             tmp_time = time.time()
-            Verlet.solve4(data, N, dim,G,t)
+            Verlet1.solve4(data, N, dim,G,t)
             time4[i] += time.time() - tmp_time
         for j in range(3):
             tmp_time = time.time()
@@ -668,16 +736,15 @@ def measure_time():
 
 
 
-
-
-
 #test
 if __name__ == '__main__':
     print(sys.argv[1])
     if sys.argv[1] == "planets":
         test_planets()
+    elif sys.argv[1] == "test0":
+        test0()
     elif sys.argv[1] == "measure_time":
         measure_time()
-
+    #test0()
 
     
