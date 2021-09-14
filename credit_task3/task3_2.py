@@ -23,9 +23,9 @@ def solve0(variant):
         g = Expression('sqrt(x[0]*x[0]+x[1]*x[1])*(2*pow(cos(atan2(x[1],x[0])),2)+t*sin(2*atan2(x[1],x[0])))',degree=2,t=0)
         f = Expression('x[0]*x[1] - alpha*(4*pow(cos(atan2(x[1],x[0])),2)-2*cos(2*atan2(x[1],x[0])))',degree=2,alpha=alpha,t=0)
     elif cur_var == 3:
-        h = Expression('exp(x[0])+x[0]*x[1]+x[1]*t',degree=2,t=0)
-        g = Expression('exp(x[0])*cos(atan2(x[1],x[0]))+sqrt(x[0]*x[0]+x[1]*x[1])*sin(2*atan2(x[1],x[0])) + t*sin(atan2(x[1],x[0]))',degree=2,t=0)
-        f = Expression('x[1] + alpha*exp(x[0])',degree=2,alpha=alpha,t=0)
+        h = Expression('x[0]*x[0]+x[0]*x[1]+x[1]*t',degree=2,t=0)
+        g = Expression('2*sqrt(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)+sqrt(x[0]*x[0]+x[1]*x[1])*sin(2*atan2(x[1],x[0])) + t*sin(atan2(x[1],x[0]))',degree=2,t=0)
+        f = Expression('x[1] - alpha*2',degree=2,alpha=alpha,t=0)
     else:
         return
     
@@ -41,6 +41,9 @@ def solve0(variant):
                 return False
         else:
             return False
+
+    def boundary(x,on_boundary):
+        return on_boundary
 
     
     bc = DirichletBC(V, h, boundary1)
@@ -83,6 +86,7 @@ def solve0(variant):
         plt.tripcolor(triangulation, facecolors=zfaces_orig_arr[i], edgecolors='k')
 
     ani = animation.FuncAnimation(fig1,animate,np.arange(len(zfaces_orig_arr)))
+    plt.colorbar()
     ani.save('u_orig'+variant+'.gif')
 
     #graph2
@@ -95,6 +99,7 @@ def solve0(variant):
         plt.tripcolor(triangulation, facecolors=zfaces_arr[i], edgecolors='k')
 
     ani = animation.FuncAnimation(fig2,animate2,np.arange(len(zfaces_arr)))
+    plt.colorbar()
     ani.save('u'+variant+'.gif')
 
     #graph3

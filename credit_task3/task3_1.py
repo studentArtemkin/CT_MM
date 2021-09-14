@@ -11,16 +11,16 @@ def solve0(variant):
     alpha = 1
     if(cur_var==1):
         u_D = Expression('3 + 2*x[0]*x[0] + 3*x[1]*x[1]',degree=2)
-        g = Expression('4*sqrt(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)+6*sqrt(x[0]*x[0] + x[1]*x[1])*pow(sin(atan2(x[1],x[0])),2)',degree=2)
+        g = Expression('(4*sqrt(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)+6*sqrt(x[0]*x[0] + x[1]*x[1])*pow(sin(atan2(x[1],x[0])),2))',degree=2)
         f = Expression('-10 + alpha*(3+2*x[0]*x[0]+3*x[1]*x[1])',degree=2,alpha=alpha)
     elif(cur_var==2):
         u_D = Expression('(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)',degree=2)
         g = Expression('2*sqrt(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)',degree=2)
         f = Expression('-(4*pow(cos(atan2(x[1],x[0])),2)-2*cos(2*atan2(x[1],x[0]))) + alpha*(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)',degree=2,alpha=alpha)
     elif(cur_var==3):
-        u_D = Expression('exp(x[0])+x[0]*x[1]',degree=2)
-        g = Expression('exp(x[0])*cos(atan2(x[1],x[0]))+sqrt(x[0]*x[0]+x[1]*x[1])*sin(2*atan2(x[1],x[0]))',degree=2)
-        f = Expression('-exp(x[0])+alpha*(exp(x[0])+x[0]*x[1])',degree=2,alpha=alpha)
+        u_D = Expression('x[0]*x[0]+x[0]*x[1]',degree=2)
+        g = Expression('2*sqrt(x[0]*x[0]+x[1]*x[1])*pow(cos(atan2(x[1],x[0])),2)+sqrt(x[0]*x[0]+x[1]*x[1])*sin(2*atan2(x[1],x[0]))',degree=2)
+        f = Expression('-2+alpha*(x[0]*x[0]+x[0]*x[1])',degree=2,alpha=alpha)
     else:
         return
 
